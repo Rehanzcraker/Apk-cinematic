@@ -1,3 +1,4 @@
+
 package com.cuzz.cinematic
 
 import android.Manifest
@@ -26,8 +27,6 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.*
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
@@ -137,7 +136,6 @@ class MainActivity : ComponentActivity() {
             FrameLayout.LayoutParams(-1, -1)
         )
 
-        // TOP BAR
         val top = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -206,7 +204,6 @@ class MainActivity : ComponentActivity() {
             FrameLayout.LayoutParams(-1, dp(66), Gravity.TOP)
         )
 
-        // STATUS
         status = text("MENYIAPKAN KAMERA", 11f).apply {
             setPadding(dp(12), dp(7), dp(12), dp(7))
             background = background(0x88000000.toInt(), 18f)
@@ -222,7 +219,6 @@ class MainActivity : ComponentActivity() {
             }
         )
 
-        // BOTTOM PANEL
         val bottom = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -230,7 +226,6 @@ class MainActivity : ComponentActivity() {
             setBackgroundColor(0x99000000.toInt())
         }
 
-        // ZOOM
         val zoomRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
@@ -258,7 +253,6 @@ class MainActivity : ComponentActivity() {
 
         bottom.addView(zoomRow)
 
-        // MODES
         val modes = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
@@ -301,7 +295,6 @@ class MainActivity : ComponentActivity() {
 
         bottom.addView(modes)
 
-        // SHUTTER
         val shutterRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
@@ -408,13 +401,41 @@ class MainActivity : ComponentActivity() {
             .show()
     }
 
+    // FILTER CONTROL: INTENSITAS, TONE, WARMTH
     private fun showToneWarmth() {
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(24), dp(16), dp(24), dp(16))
         }
 
+        val intensityLabel = text(
+            "INTENSITAS FILTER: ${PhotoFilters.intensity}%",
+            14f
+        )
+
+        val intensitySlider = SeekBar(this).apply {
+            max = 100
+            progress = PhotoFilters.intensity
+        }
+
+        intensitySlider.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    PhotoFilters.intensity = progress
+                    intensityLabel.text = "INTENSITAS FILTER: $progress%"
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            }
+        )
+
         val toneLabel = text("TONE: ${PhotoFilters.tone.toInt()}", 14f)
+
         val toneSlider = SeekBar(this).apply {
             max = 100
             progress = (PhotoFilters.tone + 50).toInt().coerceIn(0, 100)
@@ -423,17 +444,21 @@ class MainActivity : ComponentActivity() {
         toneSlider.setOnSeekBarChangeListener(
             object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(
-                    seekBar: SeekBar?, progress: Int, fromUser: Boolean
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
                 ) {
                     PhotoFilters.tone = (progress - 50).toFloat()
                     toneLabel.text = "TONE: ${PhotoFilters.tone.toInt()}"
                 }
+
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {}
             }
         )
 
         val warmthLabel = text("WARMTH: ${PhotoFilters.warmth.toInt()}", 14f)
+
         val warmthSlider = SeekBar(this).apply {
             max = 100
             progress = (PhotoFilters.warmth + 50).toInt().coerceIn(0, 100)
@@ -442,23 +467,28 @@ class MainActivity : ComponentActivity() {
         warmthSlider.setOnSeekBarChangeListener(
             object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(
-                    seekBar: SeekBar?, progress: Int, fromUser: Boolean
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
                 ) {
                     PhotoFilters.warmth = (progress - 50).toFloat()
                     warmthLabel.text = "WARMTH: ${PhotoFilters.warmth.toInt()}"
                 }
+
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {}
             }
         )
 
+        layout.addView(intensityLabel)
+        layout.addView(intensitySlider)
         layout.addView(toneLabel)
         layout.addView(toneSlider)
         layout.addView(warmthLabel)
         layout.addView(warmthSlider)
 
         android.app.AlertDialog.Builder(this)
-            .setTitle("TONE & WARMTH")
+            .setTitle("FILTER CONTROL")
             .setView(layout)
             .setPositiveButton("SIMPAN", null)
             .show()
