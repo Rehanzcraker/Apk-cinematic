@@ -771,10 +771,14 @@ private fun takeLivePhoto() {
         }
     }
 
-    private fun takePhoto() {
+    private fun takePhoto(liveId: Long? = null) {
         val capture = imageCapture ?: return
 
-        val filename = "CUZZ_PHOTO_${System.currentTimeMillis()}.jpg"
+        val filename = if (liveId != null) {
+    "CUZZ_LIVE_$liveId.jpg"
+} else {
+    "CUZZ_PHOTO_${System.currentTimeMillis()}.jpg"
+}
 
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
