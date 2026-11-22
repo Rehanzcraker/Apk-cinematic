@@ -1,70 +1,36 @@
 
-name: CUZZ CINEMATIC APK
+name: Build CUZZ CINEMATIC APK
 
 on:
-  workflow_dispatch:
   push:
-    paths:
-      - '*.zip'
-      - '.github/workflows/**'
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v4
-
-      - name: Accept Android Licenses
-        run: yes | sdkmanager --licenses
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
-
-      - name: Extract project
-        run: |
-          ZIP=$(find . -maxdepth 1 -name '*.zip' | head -1)
-          test -n "$ZIP"
-          mkdir extracted
-          unzip -q "$ZIP" -d extracted
-
-      - name: Fix and Validate Android Manifest
-        run: |
-          cd extracted/CUZZ-CINEMATIC
-
-          python3 - <<'PY'
-          from pathlib import Path
-          import xml.etree.ElementTree as ET
-
-          p = Path("app/src/main/AndroidManifest.xml")
-          content = p.read_text(encoding="utf-8-sig").lstrip()
-          p.write_text(content, encoding="utf-8")
-
-          ET.parse(p)
-          print("SUCCESS: ANDROID MANIFEST XML VALID")
-          print("First line:", repr(content.splitlines()[0]))
-          PY
+        uses: android-actions/setup-android@v3
 
       - name: Build APK
+        working-directory: source/CUZZ-CINEMATIC
         run: |
-          cd extracted/CUZZ-CINEMATIC
-          gradle assembleDebug --stacktrace
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: CUZZ-CINEMATIC-APK
-          path: extracted/CUZZ-CINEMATIC/app/build/outputs/apk/debug/*.apk
+          path: source/CUZZ-CINEMATIC/app/build/outputs/apk/debug/*.apk
