@@ -635,8 +635,77 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // LIVE PHOTO: FOTO + KLIP VIDEO PENDEK
-    private fun takeLivePhoto() {
+
+private fun takeLivePhoto() {
+    if (recording != null) {
+        status.text = "TUNGGU REKAMAN SELESAI"
+        return
+    }
+
+    val capture = videoCapture ?: run {
+        status.text = "KAMERA VIDEO BELUM SIAP"
+        return
+    }
+
+    val liveId = System.currentTimeMillis()
+    val filename = "CUZZ_LIVE_$liveId.mp4"
+
+    val values = ContentValues().apply {
+        put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+        put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
+
+        if (Build.VERSION.SDK_INT >= 29) {
+            put(
+                MediaStore.Video.Media.RELATIVE_PATH,
+                "Movies/CUZZ CINEMATIC"
+            )
+        }
+    }
+
+    val output = MediaStoreOutputOptions.Builder(
+        contentResolver,
+        MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+    ).setContentValues(values).build()
+
+    try {
+        val pending = capture.output.prepareRecording(this, output)
+
+        recording = pending.start(
+            ContextCompat.getMainExecutor(this)
+        ) { event ->
+
+            when (event) {
+                is VideoRecordEvent.Start -> {
+                    status.text = "LIVE PHOTO • MEREKAM"
+
+                    // Ambil foto setelah perekaman benar-benar dimulai.
+                    takePhoto(liveId)
+
+                    // Hentikan motion setelah sekitar 3 detik.
+                    handler.postDelayed({
+                        recording?.stop()
+                    }, 3000)
+                }
+
+                is VideoRecordEvent.Finalize -> {
+                    recording = null
+                    resetShutter()
+
+                    status.text = if (!event.hasError()) {
+                        "LIVE PHOTO TERSIMPAN"
+                    } else {
+                        "LIVE PHOTO GAGAL: ${event.error}"
+                    }
+                }
+            }
+        }
+
+    } catch (e: Exception) {
+        recording = null
+        status.text = "LIVE PHOTO ERROR: ${e.message}"
+    }
+}
+
         if (recording != null) {
             status.text = "TUNGGU VIDEO SELESAI"
             return
