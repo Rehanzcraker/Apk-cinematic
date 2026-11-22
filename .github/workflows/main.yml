@@ -11,9 +11,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_HOME: /usr/local/lib/android/sdk
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -24,16 +21,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Check Android SDK
-        run: |
-          echo "Android SDK: $ANDROID_HOME"
-          ls "$ANDROID_HOME"
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build CUZZ CINEMATIC
         working-directory: source/CUZZ-CINEMATIC
         run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
