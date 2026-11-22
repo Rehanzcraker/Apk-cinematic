@@ -40,20 +40,27 @@ jobs:
           mkdir extracted
           unzip -q "$ZIP" -d extracted
 
-      - name: Inspect Android Manifest
+      - name: Fix and Validate Android Manifest
         run: |
           cd extracted/CUZZ-CINEMATIC
-          echo "===== MANIFEST FILE ====="
-          ls -l app/src/main/AndroidManifest.xml
-          echo "===== MANIFEST CONTENT ====="
-          cat -A app/src/main/AndroidManifest.xml
-          echo "===== XML VALIDATION ====="
-          python3 -c "import xml.etree.ElementTree as ET; ET.parse('app/src/main/AndroidManifest.xml'); print('XML VALID')"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          p = Path("app/src/main/AndroidManifest.xml")
+          content = p.read_text(encoding="utf-8-sig").lstrip()
+          p.write_text(content, encoding="utf-8")
+
+          ET.parse(p)
+          print("SUCCESS: ANDROID MANIFEST XML VALID")
+          print("First line:", repr(content.splitlines()[0]))
+          PY
 
       - name: Build APK
         run: |
           cd extracted/CUZZ-CINEMATIC
-          gradle assembleDebug --stacktrace --info
+          gradle assembleDebug --stacktrace
 
       - name: Upload APK
         if: success()
