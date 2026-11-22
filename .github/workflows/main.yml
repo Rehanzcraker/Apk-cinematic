@@ -11,22 +11,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          accept-android-sdk-licenses: true
+      - name: Check Android SDK
+        run: |
+          echo "Android SDK: $ANDROID_HOME"
+          ls "$ANDROID_HOME"
 
-      - name: Build APK
+      - name: Build CUZZ CINEMATIC
         working-directory: source/CUZZ-CINEMATIC
         run: |
           chmod +x gradlew
@@ -37,3 +40,4 @@ jobs:
         with:
           name: CUZZ-CINEMATIC-APK
           path: source/CUZZ-CINEMATIC/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
