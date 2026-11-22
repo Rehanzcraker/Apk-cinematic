@@ -30,17 +30,38 @@ jobs:
           echo "Checking Android SDK..."
           ls "$ANDROID_HOME"
           ls "$ANDROID_HOME/platform-tools"
+          ls "$ANDROID_HOME/platforms"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build CUZZ CINEMATIC
         working-directory: source/CUZZ-CINEMATIC
-        run: gradle assembleDebug
+        run: gradle --no-daemon clean assembleDebug
+
+      - name: Verify APK
+        working-directory: source/CUZZ-CINEMATIC
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+
+          echo "Checking APK file..."
+          test -s "$APK"
+
+          echo "Checking APK ZIP integrity..."
+          unzip -t "$APK"
+
+          echo "Checking APK signature..."
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify "$APK"
+
+          echo "APK verification successful!"
+          sha256sum "$APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: CUZZ-CINEMATIC-APK
-          path: source/CUZZ-CINEMATIC/app/build/outputs/apk/debug/*.apk
+          path: source/CUZZ-CINEMATIC/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          compression-level: 0
